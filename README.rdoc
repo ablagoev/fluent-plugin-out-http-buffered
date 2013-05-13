@@ -1,4 +1,4 @@
-= fluent-out-http-buffered
+= fluent-out-http-buffered {<img src="https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered.png?branch=master" />}[https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered]
 
 This is an output plugin for (Fluentd)[http://fluentd.org/] which deliveres buffered log messages to an http endpoint.
 
