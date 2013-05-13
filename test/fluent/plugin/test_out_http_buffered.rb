@@ -49,11 +49,15 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
 
     d.emit("abc")
 
-    Net::HTTP.any_instance.stub(:request) do
+    http = double()
+    http.stub(:start).and_yield(http)
+    http.stub(:request) do
       response = OpenStruct.new
       response.code = "500"
       response
     end
+
+    d.instance.instance_eval{ @http = http }
 
     assert_raise Fluent::HttpBufferedRetryException do
       d.run
@@ -69,14 +73,20 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
     d = create_driver("endpoint_url http://www.google.com/")
 
     d.emit("message")
-
-    Net::HTTP.any_instance.stub(:request) do |request|
+    http = double("Net::HTTP")
+    http.stub(:start).and_yield(http)
+    http.stub(:request) do |request|
       assert(request.body =~ /message/)
       response = OpenStruct.new
       response.code = "200"
       response
     end
 
+    d.instance.instance_eval{ @http = http }
+
     data = d.run
+
+    verify_rspec
+    teardown_rspec
   end
 end
