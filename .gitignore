@@ -1,0 +1,4 @@
+Gemfile.lock
+
+#Gem builds
+fluent-plugin-out-buffered-*.gem
