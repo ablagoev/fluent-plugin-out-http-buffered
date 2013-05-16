@@ -1,6 +1,4 @@
 module Fluent
-  class HttpBufferedRetryException < Exception
-  end
 
   class HttpBufferedOutput < Fluent::BufferedOutput
     Fluent::Plugin.register_output('http_buffered', self)
@@ -55,6 +53,10 @@ module Fluent
 
     def shutdown
       super
+      begin
+        @http.finish
+      rescue
+      end
     end
 
     def format(tag, time, record)
@@ -70,18 +72,23 @@ module Fluent
       request = create_request(data)
 
       begin
-        res = @http.start do |http|
+        response = @http.start do |http|
           request = create_request(data)
-          response = http.request request
+          http.request request
+        end
 
-          if @statuses.include? response.code.to_i
-            #Raise an exception so that fluent retries
-            raise HttpBufferedRetryException, "Server returned bad status: #{response.code}"
-          end
+        if @statuses.include? response.code.to_i
+          #Raise an exception so that fluent retries
+          raise "Server returned bad status: #{response.code}"
         end
       rescue IOError, EOFError, SystemCallError
         # server didn't respond 
         $log.warn "Net::HTTP.#{request.method.capitalize} raises exception: #{$!.class}, '#{$!.message}'"
+      ensure
+        begin
+          @http.finish
+        rescue
+        end
       end
     end
 

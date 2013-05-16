@@ -50,6 +50,7 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
     d.emit("abc")
 
     http = double()
+    http.stub(:finish)
     http.stub(:start).and_yield(http)
     http.stub(:request) do
       response = OpenStruct.new
@@ -59,7 +60,7 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
 
     d.instance.instance_eval{ @http = http }
 
-    assert_raise Fluent::HttpBufferedRetryException do
+    assert_raise RuntimeError do
       d.run
     end
 
@@ -74,6 +75,7 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
 
     d.emit("message")
     http = double("Net::HTTP")
+    http.stub(:finish)
     http.stub(:start).and_yield(http)
     http.stub(:request) do |request|
       assert(request.body =~ /message/)
