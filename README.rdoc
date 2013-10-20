@@ -1,14 +1,14 @@
 = fluent-out-http-buffered {<img src="https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered.png?branch=master" />}[https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered]
 
-This is an output plugin for (Fluentd)[http://fluentd.org/] which deliveres buffered log messages to an http endpoint.
+This is an output plugin for Fluentd[http://fluentd.org/] which deliveres buffered log messages to an http endpoint.
 
-It has configurable (read)[http://ruby-doc.org/stdlib-2.0/libdoc/net/http/rdoc/Net/HTTP.html#method-i-read_timeout-3D] and (open)[http://ruby-doc.org/stdlib-2.0/libdoc/net/http/rdoc/Net/HTTP.html#open_timeout] timeouts.
+It has configurable read[http://ruby-doc.org/stdlib-2.0/libdoc/net/http/rdoc/Net/HTTP.html#method-i-read_timeout-3D] and open[http://ruby-doc.org/stdlib-2.0/libdoc/net/http/rdoc/Net/HTTP.html#open_timeout] timeouts.
 
 Clients can also configure which http response statuses should be retried (in most cases clients would want to retry on status 500).
 
 All messages are sent through POST in json format.
 
-The plugin was influenced by the standard (http output plugin)[https://github.com/ento/fluent-plugin-out-http].
+The plugin was influenced by the standard http_output_plugin[https://github.com/ento/fluent-plugin-out-http].
 
 == Installation:
 
