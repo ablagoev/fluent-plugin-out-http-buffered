@@ -1,5 +1,7 @@
-module Fluent
+# encoding: utf-8
 
+module Fluent
+  # Main Output plugin class
   class HttpBufferedOutput < Fluent::BufferedOutput
     Fluent::Plugin.register_output('http_buffered', self)
 
@@ -13,34 +15,32 @@ module Fluent
     config_param :endpoint_url, :string
 
     # statuses under which to retry
-    config_param :http_retry_statuses, :string, :default => ""
+    config_param :http_retry_statuses, :string, default: ''
 
     # read timeout for the http call
-    config_param :http_read_timeout, :float, :default => 2.0
+    config_param :http_read_timeout, :float, default: 2.0
 
     # open timeout for the http call
-    config_param :http_open_timeout, :float, :default => 2.0
+    config_param :http_open_timeout, :float, default: 2.0
 
     def configure(conf)
       super
 
-      #Check if endpoint URL is valid
-      unless @endpoint_url =~ /^#{URI::regexp}$/
-        raise Fluent::ConfigError, "endpoint_url invalid"
+      # Check if endpoint URL is valid
+      unless @endpoint_url =~ /^#{URI.regexp}$/
+        fail Fluent::ConfigError, 'endpoint_url invalid'
       end
-      
+
       begin
-        @uri = URI::parse(@endpoint_url)
+        @uri = URI.parse(@endpoint_url)
       rescue URI::InvalidURIError
-        raise Fluent::ConfigError, "endpoint_url invalid"
+        raise Fluent::ConfigError, 'endpoint_url invalid'
       end
 
-      #Parse http statuses
-      @statuses = @http_retry_statuses.split(",").map { |status| status.to_i}
+      # Parse http statuses
+      @statuses = @http_retry_statuses.split(',').map { |status| status.to_i }
 
-      if @statuses.nil?
-        @statuses = []
-      end
+      @statuses = [] if @statuses.nil?
 
       @http = Net::HTTP.new(@uri.host, @uri.port)
       @http.read_timeout = @http_read_timeout
@@ -65,7 +65,7 @@ module Fluent
 
     def write(chunk)
       data = []
-      chunk.msgpack_each do |(tag,time,record)|
+      chunk.msgpack_each do |(tag, time, record)|
         data << [tag, time, record]
       end
 
@@ -78,12 +78,12 @@ module Fluent
         end
 
         if @statuses.include? response.code.to_i
-          #Raise an exception so that fluent retries
-          raise "Server returned bad status: #{response.code}"
+          # Raise an exception so that fluent retries
+          fail "Server returned bad status: #{response.code}"
         end
-      rescue IOError, EOFError, SystemCallError
-        # server didn't respond 
-        $log.warn "Net::HTTP.#{request.method.capitalize} raises exception: #{$!.class}, '#{$!.message}'"
+      rescue IOError, EOFError, SystemCallError => e
+        # server didn't respond
+        $log.warn "Net::HTTP.#{request.method.capitalize} raises exception: #{e.class}, '#{e.message}'"
       ensure
         begin
           @http.finish
@@ -93,13 +93,14 @@ module Fluent
     end
 
     protected
-      def create_request(data)
-        request= Net::HTTP::Post.new(@uri.request_uri)
 
-        #Headers
+      def create_request(data)
+        request = Net::HTTP::Post.new(@uri.request_uri)
+
+        # Headers
         request['Content-Type'] = 'application/json'
 
-        #Body
+        # Body
         request.body = JSON.dump(data)
 
         request

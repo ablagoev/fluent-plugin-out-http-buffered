@@ -1,6 +1,9 @@
+# encoding: utf-8
+
 require 'helper'
 require 'yaml'
 
+# Test case for the output plugin
 class HttpBufferedOutputTest < Test::Unit::TestCase
   def setup
     Fluent::Test.setup
@@ -10,7 +13,7 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
     endpoint_url  http://local.endpoint
   ]
 
-  #Used to test invalid method config
+  # Used to test invalid method config
   CONFIG_METHOD = %[
     endpoint_url local.endpoint
     http_method  invalid_method
@@ -22,20 +25,20 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
 
   def test_configure
     d = create_driver
-    assert_equal 'http://local.endpoint', d.instance.instance_eval{ @endpoint_url }
-    assert_equal "", d.instance.instance_eval{ @http_retry_statuses }
-    assert_equal [], d.instance.instance_eval{ @statuses }
-    assert_equal 2.0, d.instance.instance_eval{ @http_read_timeout }
-    assert_equal 2.0, d.instance.instance_eval{ @http_open_timeout }
+    assert_equal 'http://local.endpoint', d.instance.instance_eval { @endpoint_url }
+    assert_equal '', d.instance.instance_eval { @http_retry_statuses }
+    assert_equal [], d.instance.instance_eval { @statuses }
+    assert_equal 2.0, d.instance.instance_eval { @http_read_timeout }
+    assert_equal 2.0, d.instance.instance_eval { @http_open_timeout }
   end
 
   def test_invalid_endpoint
     assert_raise Fluent::ConfigError do
-      d = create_driver("endpoint_url \\@3")
+      create_driver('endpoint_url \\@3')
     end
 
     assert_raise Fluent::ConfigError do
-      d = create_driver("endpoint_url google.com")
+      create_driver('endpoint_url google.com')
     end
   end
 
@@ -47,18 +50,18 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
         http_retry_statuses 500
       ])
 
-    d.emit("abc")
+    d.emit('abc')
 
     http = double()
     http.stub(:finish)
     http.stub(:start).and_yield(http)
     http.stub(:request) do
       response = OpenStruct.new
-      response.code = "500"
+      response.code = '500'
       response
     end
 
-    d.instance.instance_eval{ @http = http }
+    d.instance.instance_eval { @http = http }
 
     assert_raise RuntimeError do
       d.run
@@ -71,22 +74,22 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
   def test_write
     setup_rspec(self)
 
-    d = create_driver("endpoint_url http://www.google.com/")
+    d = create_driver('endpoint_url http://www.google.com/')
 
-    d.emit("message")
-    http = double("Net::HTTP")
+    d.emit('message')
+    http = double('Net::HTTP')
     http.stub(:finish)
     http.stub(:start).and_yield(http)
     http.stub(:request) do |request|
       assert(request.body =~ /message/)
       response = OpenStruct.new
-      response.code = "200"
+      response.code = '200'
       response
     end
 
-    d.instance.instance_eval{ @http = http }
+    d.instance.instance_eval { @http = http }
 
-    data = d.run
+    d.run
 
     verify_rspec
     teardown_rspec
