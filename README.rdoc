@@ -1,4 +1,8 @@
-= fluent-out-http-buffered {<img src="https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered.png?branch=master" />}[https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered]
+{<img src="https://badge.fury.io/rb/fluent-plugin-out-http-buffered.png" alt="Gem Version" />}[http://badge.fury.io/rb/fluent-plugin-out-http-buffered]
+{<img src="https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered.png?branch=master" />}[https://travis-ci.org/ablagoev/fluent-plugin-out-http-buffered]
+{<img src="https://coveralls.io/repos/ablagoev/fluent-plugin-out-http-buffered/badge.png" alt="Coverage Status" />}[https://coveralls.io/r/ablagoev/fluent-plugin-out-http-buffered]
+
+= fluent-out-http-buffered
 
 This is an output plugin for Fluentd[http://fluentd.org/] which deliveres buffered log messages to an http endpoint.
 
