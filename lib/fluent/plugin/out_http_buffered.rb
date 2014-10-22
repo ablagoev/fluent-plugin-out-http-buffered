@@ -88,7 +88,6 @@ module Fluent
 
 
     def write(chunk)
-$log.warn "Sending data to MMX"
       #data = []
         data = chunk
        begin
