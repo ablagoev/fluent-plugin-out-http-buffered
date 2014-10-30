@@ -2,7 +2,7 @@
 
 module Fluent
   # Main Output plugin class
-  class HttpBufferedOutput < Fluent::BufferedOutput
+  class HttpBufferedOutput <  Fluent::BufferedOutput
     Fluent::Plugin.register_output('http_buffered', self)
 
     def initialize
@@ -15,7 +15,7 @@ module Fluent
     config_param :endpoint_url, :string
 
     # statuses under which to retry
-    config_param :http_retry_statuses, :string, default: ''
+    config_param :http_ok_statuses, :string, default: ''
 
     # read timeout for the http call
     config_param :http_read_timeout, :float, default: 2.0
@@ -23,9 +23,15 @@ module Fluent
     # open timeout for the http call
     config_param :http_open_timeout, :float, default: 2.0
 
+    # nil | 'none' | 'basic'
+  config_param :authentication, :string, :default => nil
+  config_param :username, :string, :default => ''
+  config_param :password, :string, :default => ''
+
     def configure(conf)
       super
 
+      #@timef = TimeFormatter.new(@time_format, @localtime)
       # Check if endpoint URL is valid
       unless @endpoint_url =~ /^#{URI.regexp}$/
         fail Fluent::ConfigError, 'endpoint_url invalid'
@@ -38,14 +44,25 @@ module Fluent
       end
 
       # Parse http statuses
-      @statuses = @http_retry_statuses.split(',').map { |status| status.to_i }
+      @statuses = @http_ok_statuses.split(',').map { |status| status.to_i }
 
       @statuses = [] if @statuses.nil?
 
-      @http = Net::HTTP.new(@uri.host, @uri.port)
-      @http.read_timeout = @http_read_timeout
-      @http.open_timeout = @http_open_timeout
+
+      @auth = case @authentication
+            when 'basic' then :basic
+            else
+              :none
+            end
+
+#      @http = Net::HTTP.new(@uri.host, @uri.port)
+#      @http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+#      @http.read_timeout = @http_read_timeout
+#      @http.open_timeout = @http_open_timeout
+#      @http.use_ssl = @uri.scheme == 'https'
+
     end
+
 
     def start
       super
@@ -59,34 +76,48 @@ module Fluent
       end
     end
 
+
     def format(tag, time, record)
-      [tag, time, record].to_msgpack
+      #time_str = @timef.format(time)
+      record["msg"] + "\n"
     end
 
-    def write(chunk)
-      data = []
-      chunk.msgpack_each do |(tag, time, record)|
-        data << [tag, time, record]
-      end
+   def set_header(req)
+    req
+  end
 
+
+    def write(chunk)
+      http = Net::HTTP.new(@uri.host, @uri.port)
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      http.read_timeout = @http_read_timeout
+      http.open_timeout = @http_open_timeout
+      http.use_ssl = @uri.scheme == 'https'
+
+      $log.info "Sending data to #{@uri.request_uri}"
+      #data = []
+        data = chunk
       request = create_request(data)
 
       begin
-        response = @http.start do |http|
-          request = create_request(data)
-          http.request request
+        response = http.start do |ht|
+      #    request = create_request(data)
+          ht.request request
         end
+        $log.warn "response status is  #{response.code}"
 
-        if @statuses.include? response.code.to_i
+        unless @statuses.include? response.code.to_i
+
           # Raise an exception so that fluent retries
           fail "Server returned bad status: #{response.code}"
         end
-      rescue IOError, EOFError, SystemCallError => e
+      rescue StandardError, OpenSSL::SSL::SSLError, IOError, EOFError, SystemCallError => e
         # server didn't respond
         $log.warn "Net::HTTP.#{request.method.capitalize} raises exception: #{e.class}, '#{e.message}'"
-      ensure
+        fail e.message
+ ensure
         begin
-          @http.finish
+          http.finish
         rescue
         end
       end
@@ -95,14 +126,22 @@ module Fluent
     protected
 
       def create_request(data)
+
         request = Net::HTTP::Post.new(@uri.request_uri)
 
-        # Headers
+         #$log.warn "data is  #{data}"
+        # Body
+        request.body =data.read
+         # Headers
         request['Content-Type'] = 'application/json'
 
-        # Body
-        request.body = JSON.dump(data)
+       set_header(request)
+        #$log.warn "request is  #{request}"
 
+        if @auth and @auth == :basic
+                request.basic_auth(@username, @password)
+        end
+        #@http.use_ssl = true
         request
       end
   end
