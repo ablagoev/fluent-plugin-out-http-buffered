@@ -43,6 +43,7 @@ module Fluent
       @statuses = [] if @statuses.nil?
 
       @http = Net::HTTP.new(@uri.host, @uri.port)
+      @http.use_ssl = (@uri.scheme == "https")
       @http.read_timeout = @http_read_timeout
       @http.open_timeout = @http_open_timeout
     end
