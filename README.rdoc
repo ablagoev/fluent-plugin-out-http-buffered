@@ -33,6 +33,8 @@ The plugin was influenced by the standard http_output_plugin[https://github.com/
       http_read_timeout 2.2
       #Open timeout in seconds, supports floats
       http_open_timeout 2.34
+      # Send only record instead of [tag,time,record]
+      send_only_records true
     </match>
 
 == Copyright

@@ -23,6 +23,9 @@ module Fluent
     # open timeout for the http call
     config_param :http_open_timeout, :float, default: 2.0
 
+    # discard tag and time from data
+    config_param :send_only_records, :bool, default: false
+
     def configure(conf)
       super
 
@@ -66,7 +69,11 @@ module Fluent
     def write(chunk)
       data = []
       chunk.msgpack_each do |(tag, time, record)|
-        data << [tag, time, record]
+        if @send_only_records
+          data << record
+	else
+          data << [tag, time, record]
+        end
       end
 
       request = create_request(data)
