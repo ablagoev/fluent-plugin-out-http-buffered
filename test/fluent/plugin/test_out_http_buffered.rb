@@ -30,6 +30,7 @@ class HttpBufferedOutputTest < Test::Unit::TestCase
     assert_equal [], d.instance.instance_eval { @statuses }
     assert_equal 2.0, d.instance.instance_eval { @http_read_timeout }
     assert_equal 2.0, d.instance.instance_eval { @http_open_timeout }
+    assert_equal false, d.instance.instance_eval { @send_only_records }
   end
 
   def test_invalid_endpoint
